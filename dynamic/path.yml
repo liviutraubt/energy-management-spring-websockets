@@ -1,0 +1,100 @@
+http:
+  middlewares:
+    
+    cors-headers:
+      headers:
+        accessControlAllowOriginList:
+          - "http://localhost:3000"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "PATCH"
+          - "OPTIONS"
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "app-auth"
+          - "Origin"
+          - "Accept"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 100
+        addVaryHeader: true
+
+    
+    auth-fw:
+      forwardAuth:
+        address: "http://authenticationservice:8083/validate"
+        trustForwardHeader: true
+        authRequestHeaders:
+         - "app-auth"
+  
+  routers:
+
+    frontend-app:
+      rule: "Host(`localhost`) && PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: frontend-service
+      priority: 1
+
+    user-api:
+      rule: "Host(`localhost`) && PathPrefix(`/api/user`)"
+      entryPoints:
+        - web
+      service: user-service
+      middlewares:
+        - cors-headers
+        - auth-fw
+      
+    device-api:
+        rule: "Host(`localhost`) && PathPrefix(`/api/device`)"
+        entryPoints:
+          - web 
+        service: device-service
+        middlewares:
+          - cors-headers
+          - auth-fw
+        
+    authentication-api:
+        rule: "Host(`localhost`) && PathPrefix(`/api/auth`)"
+        entryPoints:
+          - web
+        service: authentication-service
+        middlewares:
+          - cors-headers
+
+    monitoring-api:
+        rule: "Host(`localhost`) && PathPrefix(`/api/monitoring`)"
+        entryPoints:
+          - web 
+        service: monitoring-service
+        middlewares:
+          - cors-headers
+          - auth-fw
+
+  services:
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:80"
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: "http://userservice:8081" 
+
+    device-service:
+      loadBalancer:
+        servers:
+          - url: "http://deviceservice:8082" 
+      
+    authentication-service:
+      loadBalancer:
+        servers:
+          - url: "http://authenticationservice:8083" 
+
+    monitoring-service:
+      loadBalancer:
+        servers:
+          - url: "http://monitoringservice:8084"
