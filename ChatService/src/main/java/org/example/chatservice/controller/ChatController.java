@@ -1,15 +1,13 @@
-package controller;
+package org.example.chatservice.controller;
 
 
-import dto.ChatMessage;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import org.example.chatservice.dto.ChatMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import service.BotService;
+import org.example.chatservice.service.BotService;
 
 @Controller
 public class ChatController {
