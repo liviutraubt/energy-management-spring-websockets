@@ -132,6 +132,16 @@ services:
     networks:
       - SD_Network
 
+  chatservice:
+    build:
+      context: ./ChatService
+      dockerfile: ./Dockerfile
+    container_name: chatservice
+    ports:
+      - "8095:8085"
+    networks:
+      SD_Network:
+
   traefik:
     image: traefik:v3.0
     container_name: traefik

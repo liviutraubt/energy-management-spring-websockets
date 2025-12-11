@@ -72,6 +72,14 @@ http:
         middlewares:
           - cors-headers
           - auth-fw
+    
+    chat-api:
+        rule: "Host(`localhost`) && PathPrefix(`/ws`)"
+        entryPoints:
+          - web
+        service: chat-service
+        middlewares:
+          - cors-headers
 
   services:
     frontend-service:
@@ -93,6 +101,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://authenticationservice:8083" 
+
+    chat-service:
+      loadBalancer:
+        servers:
+          - url: "http://chatservice:8085" 
 
     monitoring-service:
       loadBalancer:

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { logout } from '../apiService';
-
+import ChatComponent from './ChatComponent';
 function Layout() {
     const navigate = useNavigate();
 
@@ -19,6 +19,7 @@ function Layout() {
             <main style={{ padding: '20px' }}>
                 <Outlet />
             </main>
+            <ChatComponent />
         </div>
     );
 }
