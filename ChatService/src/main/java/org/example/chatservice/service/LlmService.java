@@ -7,6 +7,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,10 @@ public class LlmService {
     @Value("${llm.api.key}")
     private String apiKey;
 
-    @Value("${llm.model:gemini-1.5-flash}")
+    @Value("${llm.api.url:https://api.groq.com/openai/v1/chat/completions}")
+    private String apiUrl;
+
+    @Value("${llm.model}")
     private String model;
 
     private final RestTemplate restTemplate;
@@ -30,98 +34,66 @@ public class LlmService {
 
     public String generateResponse(String userMessage) {
         try {
-            String url = String.format(
-                    "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
-                    model,
-                    apiKey
-            );
-
-            System.out.println("DEBUG: Calling URL: " + url.replace(apiKey, "***"));
-            System.out.println("DEBUG: Model: " + model);
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Authorization", "Bearer " + apiKey);
 
-            Map<String, Object> requestBody = buildGeminiRequest(userMessage);
-            String jsonBody = objectMapper.writeValueAsString(requestBody);
-            System.out.println("DEBUG: Request body: " + jsonBody);
+            Map<String, Object> requestBody = buildOpenAIRequest(userMessage);
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
             ResponseEntity<String> response = restTemplate.exchange(
-                    url,
+                    apiUrl,
                     HttpMethod.POST,
                     request,
                     String.class
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                System.out.println("DEBUG: Response received successfully");
-                return parseGeminiResponse(response.getBody());
+                return parseOpenAIResponse(response.getBody());
             }
 
-            return "Ne pare rău, serviciul de asistență AI este temporar indisponibil.";
+            return "Serviciul AI indisponibil momentan.";
 
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            System.err.println("HTTP Error: " + e.getStatusCode());
-            System.err.println("Response Body: " + e.getResponseBodyAsString());
-            System.err.println("Headers: " + e.getResponseHeaders());
-            return "Ne pare rău, a apărut o eroare la procesarea mesajului. Te rugăm să contactezi un administrator.";
         } catch (Exception e) {
-            System.err.println("Error calling Gemini API: " + e.getMessage());
             e.printStackTrace();
-            return "Ne pare rău, a apărut o eroare la procesarea mesajului. Te rugăm să contactezi un administrator.";
+            return "Eroare la procesarea răspunsului AI.";
         }
     }
 
-    private Map<String, Object> buildGeminiRequest(String userMessage) {
-        String systemPrompt =
-                "Ești un asistent virtual pentru un sistem de management energetic (Energy Management System). " +
-                        "Ajuți utilizatorii cu întrebări legate de consumul de energie, facturi, dispozitive inteligente și monitorizare. " +
-                        "Răspunde în limba română, politicos și concis, cu maximum 3-4 propoziții.";
-
-        Map<String, Object> textPart = new HashMap<>();
-        textPart.put("text", systemPrompt + "\n\nÎntrebare utilizator: " + userMessage);
-
-        Map<String, Object> content = new HashMap<>();
-        content.put("parts", List.of(textPart));
-
+    private Map<String, Object> buildOpenAIRequest(String userMessage) {
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("contents", List.of(content));
+        requestBody.put("model", model);
 
-        Map<String, Object> generationConfig = new HashMap<>();
-        generationConfig.put("temperature", 0.7);
-        generationConfig.put("maxOutputTokens", 500);
-        generationConfig.put("topP", 0.95);
-        generationConfig.put("topK", 40);
-        requestBody.put("generationConfig", generationConfig);
+        List<Map<String, String>> messages = new ArrayList<>();
+
+        Map<String, String> systemMsg = new HashMap<>();
+        systemMsg.put("role", "system");
+        systemMsg.put("content", "Ești un asistent energetic util. Răspunde scurt în română.");
+        messages.add(systemMsg);
+
+        Map<String, String> userMsg = new HashMap<>();
+        userMsg.put("role", "user");
+        userMsg.put("content", userMessage);
+        messages.add(userMsg);
+
+        requestBody.put("messages", messages);
+        requestBody.put("temperature", 0.7);
+        requestBody.put("max_tokens", 500);
 
         return requestBody;
     }
 
-    private String parseGeminiResponse(String responseBody) {
+    private String parseOpenAIResponse(String responseBody) {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
-            JsonNode candidates = root.path("candidates");
-
-            if (candidates.isArray() && candidates.size() > 0) {
-                JsonNode firstCandidate = candidates.get(0);
-                JsonNode content = firstCandidate.path("content");
-                JsonNode parts = content.path("parts");
-
-                if (parts.isArray() && parts.size() > 0) {
-                    String text = parts.get(0).path("text").asText();
-                    if (text != null && !text.isEmpty()) {
-                        return text.trim();
-                    }
-                }
+            JsonNode choices = root.path("choices");
+            if (choices.isArray() && !choices.isEmpty()) {
+                return choices.get(0).path("message").path("content").asText();
             }
-
-            return "Nu am putut genera un răspuns. Te rugăm să contactezi un administrator.";
         } catch (Exception e) {
-            System.err.println("Error parsing Gemini response: " + e.getMessage());
             e.printStackTrace();
-            return "Eroare la procesarea răspunsului AI.";
         }
+        return "Nu am putut descifra răspunsul.";
     }
 }
