@@ -2,6 +2,7 @@ package org.example.chatservice.controller;
 
 import org.example.chatservice.dto.ChatMessage;
 import org.example.chatservice.service.BotService;
+import org.example.chatservice.service.LlmService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -13,11 +14,13 @@ public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final BotService botService;
+    private final LlmService llmService;
 
     @Autowired
-    public ChatController(SimpMessagingTemplate messagingTemplate, BotService botService) {
+    public ChatController(SimpMessagingTemplate messagingTemplate, BotService botService, LlmService llmService) {
         this.messagingTemplate = messagingTemplate;
         this.botService = botService;
+        this.llmService = llmService;
     }
 
     @MessageMapping("/chat")
@@ -25,7 +28,7 @@ public class ChatController {
         String botResponseContent = botService.getBotResponse(message.getContent());
 
         if (botResponseContent == null) {
-            botResponseContent = "Nu am înțeles. Te rog contactează un admin.";
+            botResponseContent = llmService.generateResponse(message.getContent());
         }
 
         ChatMessage response = ChatMessage.builder()
