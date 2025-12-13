@@ -40,10 +40,13 @@ public class MonitoringService {
     }
 
     public void updateDevice(DeviceDTO deviceDTO) {
-        if(deviceRepository.existsById(deviceDTO.getId())) {
-            DeviceEntity deviceEntity = deviceMapper.deviceDTOToDeviceEntity(deviceDTO);
-            deviceRepository.save(deviceEntity);
-        }
+        DeviceEntity existingDevice = deviceRepository.findById(deviceDTO.getId())
+                .orElseThrow(() -> new RuntimeException("Device doesn't exist"));
+
+        existingDevice.setMaximumConsumption(deviceDTO.getMaximumConsumption());
+        existingDevice.setUserId(deviceDTO.getUserId());
+
+        deviceRepository.save(existingDevice);
     }
 
     @Transactional(readOnly = true)
