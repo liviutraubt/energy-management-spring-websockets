@@ -3,13 +3,16 @@ package org.example.monitorigservice.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.monitorigservice.dto.DeviceDTO;
+import org.example.monitorigservice.dto.ExceededConsumptionDTO; // Importă DTO-ul nou
 import org.example.monitorigservice.dto.MonitoringDTO;
+import org.example.monitorigservice.entity.DeviceEntity;
 import org.example.monitorigservice.entity.MonitoringEntity;
 import org.example.monitorigservice.mapper.MonitoringMapper;
 import org.example.monitorigservice.rabbit.RabbitConfig;
 import org.example.monitorigservice.repository.DeviceRepository;
 import org.example.monitorigservice.repository.MonitoringRepository;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate; // Importă RabbitTemplate
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
@@ -26,8 +29,9 @@ public class MonitoringListener {
     private final DeviceRepository deviceRepository;
     private final MonitoringRepository monitoringRepository;
     private final MonitoringMapper monitoringMapper;
-
     private final MonitoringService monitoringService;
+
+    private final RabbitTemplate rabbitTemplate;
 
     @RabbitListener(queues = RabbitConfig.DEVICE_MEASUREMENTS_QUEUE)
     public void handleMessage(String messageJson) {
@@ -35,35 +39,72 @@ public class MonitoringListener {
             MonitoringDTO dto = objectMapper.readValue(messageJson, MonitoringDTO.class);
             MonitoringEntity monitoringEntity = monitoringMapper.monitoringDTOToMonitoringEntity(dto);
 
-            if(!deviceRepository.existsById(monitoringEntity.getDevice().getId())) {
-                throw new RuntimeException("Device does not exist");
-            }
+            DeviceEntity device = deviceRepository.findById(monitoringEntity.getDevice().getId())
+                    .orElseThrow(() -> new RuntimeException("Device does not exist"));
+
+            monitoringEntity.setDevice(device);
 
             LocalDateTime time = monitoringEntity.getTimestamp();
             time = time.withMinute(0).withSecond(0).withNano(0);
             monitoringEntity.setTimestamp(time);
 
-            if(monitoringRepository.findByDeviceIdAndTimestamp(monitoringEntity.getDevice().getId(), time) == null) {
-                monitoringRepository.save(monitoringEntity);
-            }
-            else{
-                MonitoringEntity existing =  monitoringRepository.findByDeviceIdAndTimestamp(monitoringEntity.getDevice().getId(), time);
+            Double currentTotalConsumption;
 
+            MonitoringEntity existing = monitoringRepository.findByDeviceIdAndTimestamp(monitoringEntity.getDevice().getId(), time);
+
+            if (existing == null) {
+                monitoringRepository.save(monitoringEntity);
+                currentTotalConsumption = monitoringEntity.getConsumption();
+            } else {
                 Double aux = monitoringEntity.getConsumption();
                 aux += existing.getConsumption();
                 aux = BigDecimal.valueOf(aux).setScale(2, RoundingMode.HALF_UP).doubleValue();
-                existing.setConsumption(aux);
 
+                existing.setConsumption(aux);
                 monitoringRepository.save(existing);
+
+                currentTotalConsumption = aux;
             }
+
+            checkAndSendNotification(device, time, currentTotalConsumption);
+
         } catch (Exception e) {
-            System.err.println("[MONITORING] Eroare la parsarea mesajului JSON: " + messageJson);
+            System.err.println("[MONITORING] Eroare la procesarea mesajului: " + messageJson);
             e.printStackTrace();
+        }
+    }
+
+    private void checkAndSendNotification(DeviceEntity device, LocalDateTime time, Double currentConsumption) {
+        if (device.getMaximumConsumption() != null && currentConsumption > device.getMaximumConsumption()) {
+            try {
+                ExceededConsumptionDTO alertDTO = ExceededConsumptionDTO.builder()
+                        .userId(device.getUserId())
+                        .deviceId(device.getId())
+                        .timestamp(time)
+                        .actualConsumption(currentConsumption)
+                        .limit(device.getMaximumConsumption())
+                        .build();
+
+                String alertJson = objectMapper.writeValueAsString(alertDTO);
+
+
+                rabbitTemplate.convertAndSend(
+                        RabbitConfig.EXCHANGE_NAME,
+                        "device.exceeded",
+                        alertJson
+                );
+
+                System.out.println("[ALERT] Mesaj trimis pentru device " + device.getId() + " - Consum depășit!");
+
+            } catch (Exception e) {
+                System.err.println("[ALERT] Nu s-a putut trimite alerta: " + e.getMessage());
+            }
         }
     }
 
     @RabbitListener(queues = RabbitConfig.DEVICE_SYNC_QUEUE)
     public void handleDeviceSync(String messageJson, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
+
         try {
             DeviceDTO deviceDTO = objectMapper.readValue(messageJson, DeviceDTO.class);
 
