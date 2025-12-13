@@ -81,6 +81,13 @@ public class MonitoringListener {
                 } catch (Exception e) {
                     System.err.println("[SYNC] Delete failed (might not exist): " + e.getMessage());
                 }
+            } else if  (routingKey.endsWith("update")) {
+                try {
+                    monitoringService.updateDevice(deviceDTO);
+                    System.out.println("[SYNC] Device updated: " + deviceDTO.getId());
+                }catch (Exception e) {
+                    System.err.println("[SYNC] Update failed: " + e.getMessage());
+                }
             }
         } catch (Exception e) {
             System.err.println("[SYNC] Eroare la procesarea mesajului de sincronizare: " + messageJson);

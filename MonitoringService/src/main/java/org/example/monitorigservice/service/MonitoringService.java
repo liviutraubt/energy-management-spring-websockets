@@ -39,6 +39,13 @@ public class MonitoringService {
         deviceRepository.deleteById(deviceId);
     }
 
+    public void updateDevice(DeviceDTO deviceDTO) {
+        if(deviceRepository.existsById(deviceDTO.getId())) {
+            DeviceEntity deviceEntity = deviceMapper.deviceDTOToDeviceEntity(deviceDTO);
+            deviceRepository.save(deviceEntity);
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<MonitoringDTO> getAllForDeviceAndTimestampMonitoring(Long deviceId, LocalDate date) {
         if(!deviceRepository.existsById(deviceId)) {

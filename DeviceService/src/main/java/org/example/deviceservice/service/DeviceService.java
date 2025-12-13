@@ -94,6 +94,14 @@ public class DeviceService {
 
         deviceMapper.updateDeviceEntityFromDeviceDTO(deviceDTO, deviceEntity);
 
+        MonitoringDeviceDTO dto = MonitoringDeviceDTO.builder()
+                .id(deviceId)
+                .maximumConsumption(deviceEntity.getConsumption())
+                .userId(deviceEntity.getUser().getId())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "device.update", dto);
+
         return deviceId;
     }
 
