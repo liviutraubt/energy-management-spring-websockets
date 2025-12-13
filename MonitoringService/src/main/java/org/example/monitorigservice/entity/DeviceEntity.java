@@ -2,6 +2,7 @@ package org.example.monitorigservice.entity;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,14 @@ public class DeviceEntity {
 
     @Id
     private Long id;
+
+    @Column
+    @NotNull
+    private Double consumption;
+
+    @Column
+    @NotNull
+    private Long userId;
 
     @OneToMany(
             mappedBy = "device",

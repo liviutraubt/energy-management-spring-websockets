@@ -6,6 +6,7 @@ import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.example.deviceservice.config.RabbitMQConfig;
 import org.example.deviceservice.dto.DeviceDTO;
+import org.example.deviceservice.dto.MonitoringDeviceDTO;
 import org.example.deviceservice.dto.UserDTO;
 import org.example.deviceservice.entity.DeviceEntity;
 import org.example.deviceservice.entity.UserEntity;
@@ -40,7 +41,12 @@ public class DeviceService {
 
         deviceRepository.save(device);
 
-        DeviceDTO dto = deviceMapper.deviceEntityToDeviceDTO(device);
+        MonitoringDeviceDTO dto = MonitoringDeviceDTO.builder()
+                .id(device.getId())
+                .consumption(device.getConsumption())
+                .userId(user.getId())
+                .build();
+
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "device.insert", dto);
         return device.getId();
     }
