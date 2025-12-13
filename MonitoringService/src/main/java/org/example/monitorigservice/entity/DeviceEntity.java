@@ -23,7 +23,7 @@ public class DeviceEntity {
 
     @Column
     @NotNull
-    private Double consumption;
+    private Double maximumConsumption;
 
     @Column
     @NotNull

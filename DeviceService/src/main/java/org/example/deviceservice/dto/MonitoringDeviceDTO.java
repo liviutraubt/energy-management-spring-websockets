@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 public class MonitoringDeviceDTO {
     private Long id;
-    private Double consumption;
+    private Double maximumConsumption;
     private Long userId;
 }

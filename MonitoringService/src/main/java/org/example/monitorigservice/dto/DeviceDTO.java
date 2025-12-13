@@ -7,6 +7,6 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DeviceDTO {
     private Long id;
-    private Double consumption;
+    private Double maximumConsumption;
     private Long userId;
 }

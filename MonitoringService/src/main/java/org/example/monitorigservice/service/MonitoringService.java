@@ -10,6 +10,7 @@ import org.example.monitorigservice.mapper.MonitoringMapper;
 import org.example.monitorigservice.repository.DeviceRepository;
 import org.example.monitorigservice.repository.MonitoringRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,6 +39,7 @@ public class MonitoringService {
         deviceRepository.deleteById(deviceId);
     }
 
+    @Transactional(readOnly = true)
     public List<MonitoringDTO> getAllForDeviceAndTimestampMonitoring(Long deviceId, LocalDate date) {
         if(!deviceRepository.existsById(deviceId)) {
             throw new RuntimeException("Device doesn't exists");

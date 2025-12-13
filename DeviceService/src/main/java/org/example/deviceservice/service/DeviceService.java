@@ -43,7 +43,7 @@ public class DeviceService {
 
         MonitoringDeviceDTO dto = MonitoringDeviceDTO.builder()
                 .id(device.getId())
-                .consumption(device.getConsumption())
+                .maximumConsumption(device.getConsumption())
                 .userId(user.getId())
                 .build();
 
