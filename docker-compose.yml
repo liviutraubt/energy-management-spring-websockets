@@ -107,22 +107,6 @@ services:
     networks:
       SD_Network:
 
-  monitoringservice:
-    build:
-      context: ./MonitoringService
-      dockerfile: ./Dockerfile
-    container_name: monitoringservice
-    ports:
-      - "8094:8084"
-    environment:
-      - DB_IP=db_monitoring
-      - DB_PORT=5432
-      - DB_DBNAME=monitoring_service_db
-      - DB_USER=postgres
-      - DB_PASSWORD=root
-    networks:
-      SD_Network:
-
   frontend:
     build:
       context: ./frontend 
@@ -141,6 +125,76 @@ services:
       - "8095:8085"
     environment:
       - LLM_API_KEY=${LLM_API_KEY}
+    networks:
+      SD_Network:
+
+  loadbalancingservice:
+    build:
+      context: ./LoadbalancingService
+      dockerfile: ./Dockerfile
+    container_name: loadbalancingservice
+    ports:
+      - "8096:8086"
+    networks:
+      SD_Network:
+
+  monitoringservice-1:
+    build:
+      context: ./MonitoringService
+      dockerfile: ./Dockerfile
+    container_name: monitoringservice-1
+    environment:
+      - DB_IP=db_monitoring
+      - DB_PORT=5432
+      - DB_DBNAME=monitoring_service_db
+      - DB_USER=postgres
+      - DB_PASSWORD=root
+      - QUEUE_NAME=monitoring_queue_0
+    networks:
+      SD_Network:
+
+  monitoringservice-2:
+    build:
+      context: ./MonitoringService
+      dockerfile: ./Dockerfile
+    container_name: monitoringservice-2
+    environment:
+      - DB_IP=db_monitoring
+      - DB_PORT=5432
+      - DB_DBNAME=monitoring_service_db
+      - DB_USER=postgres
+      - DB_PASSWORD=root
+      - QUEUE_NAME=monitoring_queue_1
+    networks:
+      SD_Network:
+
+  monitoringservice-3:
+    build:
+      context: ./MonitoringService
+      dockerfile: ./Dockerfile
+    container_name: monitoringservice-3
+    environment:
+      - DB_IP=db_monitoring
+      - DB_PORT=5432
+      - DB_DBNAME=monitoring_service_db
+      - DB_USER=postgres
+      - DB_PASSWORD=root
+      - QUEUE_NAME=monitoring_queue_2
+    networks:
+      SD_Network:
+
+  monitoringservice-4:
+    build:
+      context: ./MonitoringService
+      dockerfile: ./Dockerfile
+    container_name: monitoringservice-4
+    environment:
+      - DB_IP=db_monitoring
+      - DB_PORT=5432
+      - DB_DBNAME=monitoring_service_db
+      - DB_USER=postgres
+      - DB_PASSWORD=root
+      - QUEUE_NAME=monitoring_queue_3
     networks:
       SD_Network:
 

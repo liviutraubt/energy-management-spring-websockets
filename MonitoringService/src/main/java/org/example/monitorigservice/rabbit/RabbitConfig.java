@@ -6,20 +6,22 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfig {
-    public static final String DEVICE_MEASUREMENTS_QUEUE = "monitoring_queue";
-
     public static final String DEVICE_SYNC_QUEUE = "monitoring_sync_queue";
     public static final String EXCHANGE_NAME = "sd_sync_exchange";
     public static final String ROUTING_KEY = "device.*";
 
+    @Value("${application.rabbitmq.queue}")
+    private String queueName;
+
     @Bean
-    public Queue deviceMeasurementsQueue() {
-        return new Queue(DEVICE_MEASUREMENTS_QUEUE, false);
+    public Queue queue() {
+        return new Queue(queueName, false);
     }
 
     @Bean

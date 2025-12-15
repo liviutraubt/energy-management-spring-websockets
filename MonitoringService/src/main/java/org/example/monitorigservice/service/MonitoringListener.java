@@ -33,7 +33,7 @@ public class MonitoringListener {
 
     private final RabbitTemplate rabbitTemplate;
 
-    @RabbitListener(queues = RabbitConfig.DEVICE_MEASUREMENTS_QUEUE)
+    @RabbitListener(queues = "${application.rabbitmq.queue}")
     public void handleMessage(String messageJson) {
         try {
             MonitoringDTO dto = objectMapper.readValue(messageJson, MonitoringDTO.class);

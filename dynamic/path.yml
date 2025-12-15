@@ -102,12 +102,15 @@ http:
         servers:
           - url: "http://authenticationservice:8083" 
 
+    monitoring-service:
+      loadBalancer:
+        servers:
+          - url: "http://monitoringservice-1:8084"
+          - url: "http://monitoringservice-2:8084"
+          - url: "http://monitoringservice-3:8084"
+          - url: "http://monitoringservice-4:8084"
+
     chat-service:
       loadBalancer:
         servers:
           - url: "http://chatservice:8085" 
-
-    monitoring-service:
-      loadBalancer:
-        servers:
-          - url: "http://monitoringservice:8084"

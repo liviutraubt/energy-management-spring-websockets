@@ -3,14 +3,15 @@ import pika
 import bisect
 import json
 from datetime import datetime
+from time import sleep
 import numpy as np
 
-url = 'amqps://zknqdylg:TWrQvZmf4ZWjp2LU3ZL21jkiDqpDp9tW@cow.rmq2.cloudamqp.com/zknqdylg'
+url = 'amqps://uhxqcher:xNCRZ_4PFlv7wXD4AWmpoA07eJwK32of@kangaroo.rmq.cloudamqp.com/uhxqcher'
 
 params = pika.URLParameters(url)
 connection = pika.BlockingConnection(params)
 channel = connection.channel() 
-channel.queue_declare(queue='monitoring_queue') 
+channel.queue_declare(queue='monitoring_queue', durable=False) 
 
 # (Index, Consumption_kW)
 KEY_POINTS = [
@@ -66,8 +67,13 @@ for index in range(143):
     
     #print(message)
     
+    
     channel.basic_publish(exchange='',
                       routing_key='monitoring_queue',
                       body=message)
+    
+    print(f"S-a trimis consumul {consumption} kW cu timestamp-ul {timestamp} pentru device-ul cu id {device_id}")
+    
+    sleep(0.5)
 
 connection.close()
