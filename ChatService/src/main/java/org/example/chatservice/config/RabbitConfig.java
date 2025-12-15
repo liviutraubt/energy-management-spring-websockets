@@ -14,7 +14,7 @@ public class RabbitConfig {
 
     public static final String CHAT_ALERTS_QUEUE = "chat_alerts_queue";
     public static final String EXCHANGE_NAME = "sd_sync_exchange";
-    public static final String ROUTING_KEY = "device.exceeded";
+    public static final String ROUTING_KEY = "notification.exceeded";
 
     @Bean
     public Queue chatAlertsQueue() {

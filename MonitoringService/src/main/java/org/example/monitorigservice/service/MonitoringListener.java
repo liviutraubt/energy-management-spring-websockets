@@ -90,7 +90,7 @@ public class MonitoringListener {
 
                 rabbitTemplate.convertAndSend(
                         RabbitConfig.EXCHANGE_NAME,
-                        "device.exceeded",
+                        "notification.exceeded",
                         alertJson
                 );
 

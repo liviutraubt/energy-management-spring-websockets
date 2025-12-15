@@ -6,7 +6,7 @@ from datetime import datetime
 from time import sleep
 import numpy as np
 
-url = 'amqps://uhxqcher:xNCRZ_4PFlv7wXD4AWmpoA07eJwK32of@kangaroo.rmq.cloudamqp.com/uhxqcher'
+url = 'amqps://jiszcnui:bSVFj6l6gbF5HmLr396WMnsWeYP1WEqH@cow.rmq2.cloudamqp.com/jiszcnui'
 
 params = pika.URLParameters(url)
 connection = pika.BlockingConnection(params)
